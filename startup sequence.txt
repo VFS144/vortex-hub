@@ -1,0 +1,41 @@
+The Startup Sequence
+Backend (The Engine)
+Run this first. The frontend needs the backend to be "awake" before it can display any data.
+
+	Navigate to folder:
+	"cd backend"
+
+	Activate the Environment:
+	"..\.venv\Scripts\Activate.ps1"
+
+	Run the Server:
+	"$env:DATABASE_URL="sqlite:///./vortex_hub.db"; $env:PYTHONPATH="."; python -m app.main"
+
+	What to expect in the terminal:
+
+	You will see some "DeprecationWarnings" (you can ignore these).
+
+	A line saying: "INFO: Starting Vortex Hub v1.0.0 (development)."
+
+	The final line: "INFO: Uvicorn running on http://0.0.0.0:8000."
+
+	Crucial: Keep this window open. If you close it, the "brain" stops working.
+
+Frontend (The Interface)
+Open a second, separate PowerShell window.
+
+	Navigate to folder:
+	"cd frontend"
+
+	Set the Bridge (Manual Override):
+	" $env:NEXT_PUBLIC_API_URL="http://localhost:8000" "
+
+	Run the Frontend:
+	"npm run dev"
+
+	What to expect in the terminal:
+
+	A message saying: "ready - started server on 0.0.0.0:3000, url: http://localhost:3000."
+
+Note most important: 
+	in the url change "http://localhost:8000/dashboard" to "http://localhost:8000/login"

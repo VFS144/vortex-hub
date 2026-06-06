@@ -1,0 +1,63 @@
+# Development configuration - use with: docker-compose up
+# For production, use: docker-compose -f docker-compose.prod.yml up
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: vortex-hub-db-dev
+    environment:
+      POSTGRES_USER: vortex_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-vortex_password}
+      POSTGRES_DB: vortex_hub
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vortex_user -d vortex_hub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vortex-hub-backend-dev
+    environment:
+      DATABASE_URL: postgresql://vortex_user:${DB_PASSWORD:-vortex_password}@postgres:5432/vortex_hub
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRATION: 3600
+      REFRESH_TOKEN_EXPIRATION: 604800
+      DEBUG: ${DEBUG:-true}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    # Development: use uvicorn with reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vortex-hub-frontend-dev
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+      VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8000}
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    # Development: use vite dev server with hot reload
+    command: npm run dev -- --host
+
+volumes:
+  postgres_data:
